@@ -148,6 +148,9 @@ class Bimbler_Ajax {
 			return true;			
 		}
 
+		/*
+		 * Handler for the comment upload Ajax call.
+		 */
 		function comment_ajax_submit () {
 		
 			$post_id = $_POST['event_id'];
@@ -250,9 +253,7 @@ class Bimbler_Ajax {
 					'user_id' 				=> $this_user_id
 			);
 			
-			/**
-			 * Insert new comment and get the comment ID
-			*/
+			// Insert new comment and get the comment ID
 			$new_comment_id = wp_new_comment($commentdata);
 
 			if (!isset ($new_comment_id)) {
@@ -290,7 +291,10 @@ class Bimbler_Ajax {
 			exit;
 		}
 		
-		
+
+		/*
+		 * Handler for RSVP update Ajax.
+		 */
 		function user_rsvp_ajax_submit () {
 				
 			$event_id = $_POST['event_id'];
@@ -411,12 +415,20 @@ class Bimbler_Ajax {
 			exit;
 		}
 		
+		/* 
+		 * Handler for 'attended' indicator update.
+		 */
 		function rsvp_ajax_submit () {
-			error_log ('Ajax submit fired.');
+			//error_log ('Ajax submit fired.');
 			
-			// get the submitted parameters
 			$rsvp_id = $_POST['container'];
-
+			
+			$event_id = 0;
+			
+			if (isset ($_POST['event_id'])) {
+				$event_id = $_POST['event_id'];
+			}
+				
 			$status = $this->get_current_attendance_status ($rsvp_id);
 			
 			if (!isset ($status)) {
@@ -435,22 +447,21 @@ class Bimbler_Ajax {
 				exit;
 			}
 			
-			
 			// No attendance - set to 'Here'.
 			if ('X' == $status) {
-				error_log ('Was null, now Y');
+				//error_log ('Was null, now Y');
 				$next = 'Y';
 				$null_status = false;
 				$send['indicator'] = '<div class="rsvp-checkin-indicator-yes"><i class="fa-check-circle"></i></div>';
 			}
 			elseif ('Y' == $status) { // If here, set to not.
-				error_log ('Was Y, now N');
+				//error_log ('Was Y, now N');
 				$next = 'N';
 				$null_status = false;
 				$send['indicator'] = '<div class="rsvp-checkin-indicator-no"><i class="fa-times-circle"></i></div>';
 			}
 			else { // If not here, set to 'unknown'.
-				error_log ('Was N, now null');
+				//error_log ('Was N, now null');
 				$next = null;
 				$null_status = true;
 				$send['indicator'] = '<div class="rsvp-checkin-indicator-none"><i class="fa-question-circle"></i></div>';
@@ -475,6 +486,13 @@ class Bimbler_Ajax {
 			header( "Content-Type: application/json" );
 			
 			$send['status'] = 'success';
+			
+			// Send the number of attendees.
+			if (isset ($event_id)) {
+
+				$send['attendee_count'] = Bimbler_RSVP::get_instance()->count_attendees ($event_id);
+				$send['rsvp_count'] = Bimbler_RSVP::get_instance()->count_rsvps ($event_id);
+			}
 			
 			// generate the response
 			$response = json_encode ($send);
