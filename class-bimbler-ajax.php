@@ -17,7 +17,7 @@
 /**
  * Bimbler Ajax
  *
- * @package Bimbler_Login_Redirect
+ * @package Bimbler_Ajax
  * @author  Paul Perkins <paul@paulperkins.net>
  */
 class Bimbler_Ajax {
@@ -34,6 +34,9 @@ class Bimbler_Ajax {
          * @var      object
          */
         protected static $instance = null;
+        
+        protected static $rwgps_api_key = '8zmegw';
+        protected static $rwgps_api_version = 2;
 
         /**
          * Return an instance of this class.
@@ -66,6 +69,10 @@ class Bimbler_Ajax {
         	add_action( 'wp_ajax_rsvpajax-submit', array ($this, 'rsvp_ajax_submit'));
         	add_action( 'wp_ajax_user-rsvpajax-submit', array ($this, 'user_rsvp_ajax_submit'));
         	add_action( 'wp_ajax_commentajax-submit', array ($this, 'comment_ajax_submit'));
+        	add_action( 'wp_ajax_elevationajax-submit', array ($this, 'elevation_ajax_submit'));
+        	add_action( 'wp_ajax_locatorajax-submit', array ($this, 'locator_ajax_submit'));
+        	add_action( 'wp_ajax_locationupdateajax-submit', array ($this, 'location_update_ajax_submit'));
+        	 
         	 
 		} // End constructor.
 		
@@ -148,6 +155,382 @@ class Bimbler_Ajax {
 			return true;			
 		}
 
+		function fetch_rwgps_elevation ($rwgps_id) {
+			
+			if (!isset ($rwgps_id)) {
+				return null;
+			}
+			
+			$get  = 'http://ridewithgps.com/routes/' . $rwgps_id . '.json?';
+			$get .= 'apikey=' . $this->rwgps_api_key;
+			$get .= 'version=' . $this->rwgps_api_version;
+			
+			$elevation_json = file_get_contents($get);
+			
+			if (!isset ($elevation_json)) {
+				error_log ('Call to RWGPS API failed.');
+				
+				return null;
+			}
+
+			$elevation = json_decode ($elevation_json);
+			
+			//error_log (print_r($elevation->route->track_points, true));
+			
+			return $elevation->route->track_points;
+		}
+		
+		/*
+		 * Handler for the elevation fetch Ajax call.
+		*/
+		function elevation_ajax_submit () {
+		
+			$rwgps_id = $_POST['rwgps_id'];
+			$nonce = $_POST['nonce'];
+		
+			error_log ('Elevation AJAX: RWGPS ID: ' . $rwgps_id);
+			error_log ('Elevation AJAX: Nonce:    ' . $nonce);
+		
+			$response = '';
+		
+			if (!is_user_logged_in()) {
+				error_log ('elevation_ajax_submit: User not logged in.');
+					
+				header( "Content-Type: application/json" );
+		
+				$send['status'] = 'error';
+				$send['text'] = 'Not logged in!';
+		
+				$response = json_encode ($send);
+					
+				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+		
+				// response output
+				echo $response;
+		
+				exit;
+			}
+				
+			// TODO: Sanity-check value of RWGPS ID - must be an int.
+			if (0 == strlen ($rwgps_id)) {
+				error_log ('elevation_ajax_submit: RWGPS ID not set.');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'no_comment';
+				$send['text'] = 'Please enter a comment!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+					
+				echo $response;
+					
+				exit;
+			}
+		
+/*			if (!wp_verify_nonce($_POST['nonce'], 'bimbler_elevation')) {
+				error_log ('elevation_ajax_submit: Cannot validate nonce.');
+					
+				header( "Content-Type: application/json" );
+		
+				$send['status'] = 'invalid_nonce';
+				$send['text'] = 'Cannot validate nonce.';
+		
+				$response = json_encode ($send);
+					
+				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+		
+				// response output
+				echo $response;
+		
+				exit;
+			} */
+
+			$elevation_data = $this->fetch_rwgps_elevation ($rwgps_id); 
+			
+			//error_log (print_r($elevation_data, true));
+		
+			if (!isset ($elevation_data)) {
+				header( "Content-Type: application/json" );
+		
+				$send['status'] = 'error';
+				$send['text'] = 'Cannot fetch elevation data.';
+		
+				$response = json_encode ($send);
+					
+				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+		
+				// response output
+				echo $response;
+		
+				exit;
+			}
+		
+			// All good - convert data into an array of (distance, elevation) pairs.
+			$first = true;
+			$return = array();
+			
+			foreach ($elevation_data as $pt) {
+				
+				if ($first) {
+					$pair = array (0, $pt->e);
+				} else {
+					// Distance is measures in metres.
+					$pair = array (round($pt->d / 1000,2), $pt->e);
+						
+				}
+				
+				$return[] = $pair;
+				
+				$first = false;
+			}
+			
+			//error_log (print_r($return, true));
+			
+			$send['status'] = 'success';
+			$send['text'] = 'Elevation data retrieved.';
+			$send['data'] = $return;
+				
+			header( "Content-Type: application/json" );
+		
+			// generate the response
+			$response = json_encode ($send);
+		
+			//error_log ('Elevation AJAX - Sending:' . print_r ($response, true));
+			error_log ('Elevation AJAX - Sending: ' . $send['status'] . ' -> \'' . $send['text'] . '\'.');
+					
+			// response output
+			echo $response;
+		
+			exit;
+		}
+
+		function locator_ajax_submit () {
+		
+			// get the submitted parameters
+			$event_id = $_POST['event'];
+				
+			//error_log ('Locator AJAX: Event ID: ' . $event_id);
+				
+			if (!wp_verify_nonce($_POST['nonce'], 'bimbler_locator')) {
+				error_log ('locator_ajax_submit: Cannot validate nonce.');
+		
+				$send = 'Error: cannot validate nonce.';
+			} else {
+				// Fetch RSVP table contents for this event.
+				$rsvps = Bimbler_RSVP::get_instance()->get_event_rsvp_object ($event_id);
+				
+				// Get the position data for each user.
+				if ($rsvps) {
+					foreach ($rsvps as $rsvp) {
+						
+						$meta = get_user_meta ($rsvp->user_id, 'bimblers_loc_json', true);
+						
+						$meta_object = json_decode ($meta);
+	
+						if (!empty ($meta)) {
+							$rsvp->pos_lat = $meta_object->lat;
+							$rsvp->pos_lng = $meta_object->lng;
+							$rsvp->pos_spd = $meta_object->spd;
+							$rsvp->pos_hdg = $meta_object->hdg;
+							$rsvp->pos_time = $meta_object->time;
+						}
+					}
+				}
+				
+				$send = $rsvps;
+			}
+		
+			header( "Content-Type: application/json" );
+		
+			// generate the response
+			$response = json_encode ($send);
+				
+			//error_log ('Locator AJAX - Sending:' . print_r ($response, true));
+		
+			// response output
+			echo $response;
+		
+			exit;
+		}
+		
+
+		/*
+		 * Handler for the location update Ajax call.
+		*/
+		function location_update_ajax_submit () {
+		
+			$nonce = $_POST['nonce'];
+			$pos_lat = $_POST['pos_lat'];
+			$pos_lng = $_POST['pos_lng'];
+			$pos_spd = $_POST['pos_spd'];
+			$pos_hdg = $_POST['pos_hdg'];
+			$pos_time = $_POST['pos_time'];
+				
+			//error_log ('Location Update AJAX: Lat: ' . $pos_lat);
+			//error_log ('Location Update AJAX: Lng: ' . $pos_lng);
+			//error_log ('Location Update AJAX: Spd: ' . $pos_spd);
+			//error_log ('Location Update AJAX: Nonce: ' . $nonce);
+		
+			$response = '';
+		
+			if (!is_user_logged_in()) {
+				error_log ('location_update_ajax_submit: User not logged in.');
+					
+				header( "Content-Type: application/json" );
+		
+				$send['status'] = 'error';
+				$send['text'] = 'Not logged in!';
+		
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+		
+				// response output
+				echo $response;
+		
+				exit;
+			}
+		
+			if (!wp_verify_nonce($_POST['nonce'], 'bimbler_locator')) {
+				error_log ('location_update_ajax_submit: Cannot validate nonce.');
+					
+				header( "Content-Type: application/json" );
+		
+				$send['status'] = 'invalid_nonce';
+				$send['text'] = 'Cannot validate nonce.';
+		
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+		
+				// response output
+				echo $response;
+		
+				exit;
+			}
+			
+			// Validate the incoming data.
+			if (!is_numeric ($pos_lat) || !is_numeric ($pos_lng)) {
+				error_log ('location_update_ajax_submit: Lat / lng not numeric!');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'error';
+				$send['text'] = 'Lat / lng data not valid!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+					
+				// response output
+				echo $response;
+					
+				exit;
+			}
+			
+			// Validate the incoming data.
+			if (!empty ($pos_spd) && !is_numeric ($pos_spd)) {
+				error_log ('location_update_ajax_submit: Spd not numeric!');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'error';
+				$send['text'] = 'Spd data not valid!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+					
+				// response output
+				echo $response;
+					
+				exit;
+			}
+			
+			// Validate the incoming data.
+			if (!empty ($pos_hdg) && !is_numeric ($pos_hdg)) {
+				error_log ('location_update_ajax_submit: Hdg not numeric!');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'error';
+				$send['text'] = 'Hdg data not valid!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+					
+				// response output
+				echo $response;
+					
+				exit;
+			}
+				
+			// Validate the incoming data.
+			if (!empty ($pos_time) && !is_numeric ($pos_time)) {
+				error_log ('location_update_ajax_submit: Time not numeric!');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'error';
+				$send['text'] = 'Time data not valid!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+					
+				// response output
+				echo $response;
+					
+				exit;
+			}
+				
+			global $current_user;
+			get_currentuserinfo();
+			
+			$this_user_id = $current_user->ID;
+				
+			// Do the biz.
+			
+			$loc_object = new stdClass();
+			
+			$loc_object->time = $pos_time; //date(DATE_W3C);
+			$loc_object->lat = $pos_lat;
+			$loc_object->lng = $pos_lng;
+			$loc_object->spd = $pos_spd;
+			$loc_object->hdg = $pos_hdg;
+				
+			$loc_json = json_encode ($loc_object);
+			
+			//error_log ('Location JSON: ' . print_r($loc_json, true));
+			
+			update_user_meta ($current_user->ID, 'bimblers_loc_json', $loc_json);
+			
+			//$meta = get_user_meta ($current_user->ID, 'bimblers_loc_json', true);
+			//error_log ('Location Meta: ' . print_r($meta, true));
+				
+			// All good.
+			$send['status'] = 'success';
+			$send['text'] = 'Location updated.';
+			$send['data'] = $loc_json;
+				
+			header( "Content-Type: application/json" );
+		
+			// generate the response
+			$response = json_encode ($send);
+		
+			//error_log ('Update Location AJAX - Sending:' . print_r ($response, true));
+		
+			// response output
+			echo $response;
+		
+			exit;
+		}
+		
+		
+		
 		/*
 		 * Handler for the comment upload Ajax call.
 		 */

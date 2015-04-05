@@ -18,7 +18,7 @@ jQuery(document).ready(function ($) {
 		//var rwgps_id = document.getElementById('bimbler-next-ride-map').getAttribute('data-rwgps-id');
 		var rwgps_id = map_div.getAttribute('data-rwgps-id');
 	
-		console.log ('RWGPS: ' + rwgps_id);
+		//console.log ('RWGPS: ' + rwgps_id);
 
 	    var options = {
 	            zoom: 13,
@@ -81,34 +81,34 @@ jQuery(document).ready(function ($) {
 
 	
 		
-		$('.rsvp-checkin-container').click (function () {
+	$('.rsvp-checkin-container').click (function () {
+	
+		var rsvp_id = $(this).attr('id');
+
+		var wait = '<div class="rsvp-checkin-indicator-wait"><i class="fa fa-spinner fa-spin"></i></div>';
 		
-			var rsvp_id = $(this).attr('id');
+		var indicator = $("#rsvp-checkin-indicator-" + rsvp_id);
+		
+		// Set the indicator to an animation.
+		indicator.html (wait);
 
-			var wait = '<div class="rsvp-checkin-indicator-wait"><i class="fa fa-spinner fa-spin"></i></div>';
-			
-			var indicator = $("#rsvp-checkin-indicator-" + rsvp_id);
-			
-			// Set the indicator to an animation.
-			indicator.html (wait);
+        $.post(
+        		RSVPAjax.ajaxurl,
+        		{
+        			action: 	'checkinajax-submit', 
+        			container: 	rsvp_id
+        		},
+        		function (response) {
+        			//console.log (response);
+        			//indicator.html(response);
+        			
+        			if ('success' == response.status) {
+        				indicator.html(response.indicator);
+        			}
 
-            $.post(
-            		RSVPAjax.ajaxurl,
-            		{
-            			action: 	'checkinajax-submit', 
-            			container: 	rsvp_id
-            		},
-            		function (response) {
-            			//console.log (response);
-            			//indicator.html(response);
-            			
-            			if ('success' == response.status) {
-            				indicator.html(response.indicator);
-            			}
-
-            		}
-            );
-		});
+        		}
+        );
+	});
 
 });
     
