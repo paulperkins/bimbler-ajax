@@ -342,11 +342,11 @@ class Bimbler_Ajax {
 							$rsvp->pos_spd = $meta_object->spd;
 							$rsvp->pos_hdg = $meta_object->hdg;
 							$rsvp->pos_time = $meta_object->time;
-						}
 						
-						// Only return records for those tracking on this event.
-						if ($meta_object->event_id == $event_id) {
-							$return_rsvps[] = $rsvp;
+							// Only return records for those tracking on this event.
+							if ($meta_object->event_id == $event_id) {
+								$return_rsvps[] = $rsvp;
+							}
 						}
 					}
 				}
