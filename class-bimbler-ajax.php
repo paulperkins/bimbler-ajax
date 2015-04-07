@@ -317,9 +317,16 @@ class Bimbler_Ajax {
 				error_log ('locator_ajax_submit: Cannot validate nonce.');
 		
 				$send = 'Error: cannot validate nonce.';
+			} else if  (!is_numeric ($event_id)) {
+				error_log ('locator_ajax_submit: Cannot validate event_id.');
+				
+				$send = 'Error: cannot validate event_id.';
+				
 			} else {
 				// Fetch RSVP table contents for this event.
 				$rsvps = Bimbler_RSVP::get_instance()->get_event_rsvp_object ($event_id);
+				
+				$return_rsvps = array();
 				
 				// Get the position data for each user.
 				if ($rsvps) {
@@ -329,17 +336,22 @@ class Bimbler_Ajax {
 						
 						$meta_object = json_decode ($meta);
 	
-						if (!empty ($meta)) {
+						if (!empty ($meta_object)) {
 							$rsvp->pos_lat = $meta_object->lat;
 							$rsvp->pos_lng = $meta_object->lng;
 							$rsvp->pos_spd = $meta_object->spd;
 							$rsvp->pos_hdg = $meta_object->hdg;
 							$rsvp->pos_time = $meta_object->time;
 						}
+						
+						// Only return records for those tracking on this event.
+						if ($meta_object->event_id == $event_id) {
+							$return_rsvps[] = $rsvp;
+						}
 					}
 				}
 				
-				$send = $rsvps;
+				$send = $return_rsvps;
 			}
 		
 			header( "Content-Type: application/json" );
@@ -366,7 +378,8 @@ class Bimbler_Ajax {
 			$pos_lng = $_POST['pos_lng'];
 			$pos_spd = $_POST['pos_spd'];
 			$pos_hdg = $_POST['pos_hdg'];
-			$pos_time = $_POST['pos_time'];
+			$event_id = $_POST['event'];
+			//$pos_time = $_POST['pos_time'];
 				
 			//error_log ('Location Update AJAX: Lat: ' . $pos_lat);
 			//error_log ('Location Update AJAX: Lng: ' . $pos_lng);
@@ -408,6 +421,25 @@ class Bimbler_Ajax {
 				// response output
 				echo $response;
 		
+				exit;
+			}
+			
+			// Validate the incoming data.
+			if (!is_numeric ($event_id)) {
+				error_log ('location_update_ajax_submit: Event ID is not numeric!');
+					
+				header( "Content-Type: application/json" );
+					
+				$send['status'] = 'error';
+				$send['text'] = 'Event ID data not valid!';
+					
+				$response = json_encode ($send);
+					
+				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+					
+				// response output
+				echo $response;
+					
 				exit;
 			}
 			
@@ -469,7 +501,7 @@ class Bimbler_Ajax {
 			}
 				
 			// Validate the incoming data.
-			if (!empty ($pos_time) && !is_numeric ($pos_time)) {
+/*			if (!empty ($pos_time) && !is_numeric ($pos_time)) {
 				error_log ('location_update_ajax_submit: Time not numeric!');
 					
 				header( "Content-Type: application/json" );
@@ -485,7 +517,7 @@ class Bimbler_Ajax {
 				echo $response;
 					
 				exit;
-			}
+			} */
 				
 			global $current_user;
 			get_currentuserinfo();
@@ -496,11 +528,13 @@ class Bimbler_Ajax {
 			
 			$loc_object = new stdClass();
 			
-			$loc_object->time = $pos_time; //date(DATE_W3C);
+			//$loc_object->time = $pos_time;
+			$loc_object->time = time(); //date(DATE_W3C);
 			$loc_object->lat = $pos_lat;
 			$loc_object->lng = $pos_lng;
 			$loc_object->spd = $pos_spd;
 			$loc_object->hdg = $pos_hdg;
+			$loc_object->event_id = $event_id;
 				
 			$loc_json = json_encode ($loc_object);
 			
