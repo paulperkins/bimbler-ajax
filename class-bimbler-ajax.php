@@ -99,7 +99,7 @@ class Bimbler_Ajax {
 			
 			$rsvp_db_table = 'bimbler_rsvp';
 			
-			$table_name = $wpdb->prefix . $rsvp_db_table;
+			$table_name = $wpdb->base_prefix . $rsvp_db_table;
 			
 			$sql =  'SELECT * FROM '. $table_name;
 			$sql .= ' WHERE id = '. $rsvp_id;
@@ -126,7 +126,7 @@ class Bimbler_Ajax {
 				
 			$rsvp_db_table = 'bimbler_rsvp';
 				
-			$table_name = $wpdb->prefix . $rsvp_db_table;
+			$table_name = $wpdb->base_prefix . $rsvp_db_table;
 
 			if (true == $null_status) {
 				error_log ('Null flag set.');
