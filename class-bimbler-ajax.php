@@ -129,7 +129,7 @@ class Bimbler_Ajax {
 			$table_name = $wpdb->base_prefix . $rsvp_db_table;
 
 			if (true == $null_status) {
-				error_log ('Null flag set.');
+				//error_log ('Null flag set.');
 
 				$sql  = 'UPDATE '. $table_name;
 				$sql .= ' SET attended = null ';
@@ -138,7 +138,7 @@ class Bimbler_Ajax {
 				$upd = $wpdb->query( $wpdb->prepare ($sql, $rsvp_id));
 			}
 			else {
-				error_log ('Null flag not set.');
+				//error_log ('Null flag not set.');
 				
 				$sql  = 'UPDATE '. $table_name;
 				$sql .= ' SET attended = %s';
@@ -203,7 +203,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -259,7 +259,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Elevation AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -298,7 +298,7 @@ class Bimbler_Ajax {
 			$response = json_encode ($send);
 		
 			//error_log ('Elevation AJAX - Sending:' . print_r ($response, true));
-			error_log ('Elevation AJAX - Sending: ' . $send['status'] . ' -> \'' . $send['text'] . '\'.');
+			//error_log ('Elevation AJAX - Sending: ' . $send['status'] . ' -> \'' . $send['text'] . '\'.');
 					
 			// response output
 			echo $response;
@@ -398,7 +398,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -416,7 +416,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -435,7 +435,7 @@ class Bimbler_Ajax {
 					
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 					
 				// response output
 				echo $response;
@@ -454,7 +454,7 @@ class Bimbler_Ajax {
 					
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 					
 				// response output
 				echo $response;
@@ -473,7 +473,7 @@ class Bimbler_Ajax {
 					
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 					
 				// response output
 				echo $response;
@@ -492,7 +492,7 @@ class Bimbler_Ajax {
 					
 				$response = json_encode ($send);
 					
-				error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Location Update AJAX - Sending:' . print_r ($send, true));
 					
 				// response output
 				echo $response;
@@ -592,7 +592,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Comment AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Comment AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -615,7 +615,7 @@ class Bimbler_Ajax {
 				
 				$response = json_encode ($send);
 					
-				error_log ('Comment AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Comment AJAX - Sending:' . print_r ($send, true));
 				
 				// response output
 				echo $response;
@@ -633,7 +633,7 @@ class Bimbler_Ajax {
 			
 				$response = json_encode ($send);
 					
-				error_log ('Comment AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Comment AJAX - Sending:' . print_r ($send, true));
 			
 				// response output
 				echo $response;
@@ -652,7 +652,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('Comment AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Comment AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -681,7 +681,7 @@ class Bimbler_Ajax {
 				
 				$response = json_encode ($send);
 					
-				error_log ('Comment AJAX - Sending:' . print_r ($send, true));
+				//error_log ('Comment AJAX - Sending:' . print_r ($send, true));
 				
 				// response output
 				echo $response;
@@ -700,7 +700,7 @@ class Bimbler_Ajax {
 			// generate the response
 			$response = json_encode ($send);
 		
-			error_log ('Comment AJAX - Sending:' . print_r ($response, true));
+			//error_log ('Comment AJAX - Sending:' . print_r ($response, true));
 		
 			// response output
 			echo $response;
@@ -736,7 +736,7 @@ class Bimbler_Ajax {
 				
 				$response = json_encode ($send);
 					
-				error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
+				//error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
 				
 				// response output
 				echo $response;
@@ -760,7 +760,7 @@ class Bimbler_Ajax {
 				
 				$response = json_encode ($send);
 					
-				error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
+				//error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
 				
 				// response output
 				echo $response;
@@ -778,7 +778,7 @@ class Bimbler_Ajax {
 		
 				$response = json_encode ($send);
 					
-				error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
+				//error_log ('RSVP AJAX - Sending:' . print_r ($send, true));
 		
 				// response output
 				echo $response;
@@ -824,7 +824,7 @@ class Bimbler_Ajax {
 			// generate the response
 			$response = json_encode ($send);
 		
-			error_log ('RSVP AJAX - Sending:' . print_r ($response, true));
+			//error_log ('RSVP AJAX - Sending:' . print_r ($response, true));
 				
 			// response output
 			echo $response;
@@ -857,7 +857,7 @@ class Bimbler_Ajax {
 				// generate the response
 				$response = json_encode( $send );
 	
-				error_log ('Bimbler AJAX: Error - sending: \'' . $response . '\'.');
+				//error_log ('Bimbler AJAX: Error - sending: \'' . $response . '\'.');
 
 				echo $response;
 				
@@ -891,7 +891,7 @@ class Bimbler_Ajax {
 				
 				$response = json_encode( $send );
 				
-				error_log ('Bimbler AJAX: Error - sending: \'' . $response . '\'.');
+				//error_log ('Bimbler AJAX: Error - sending: \'' . $response . '\'.');
 				
 				echo $response;
 				
@@ -914,7 +914,7 @@ class Bimbler_Ajax {
 			// generate the response
 			$response = json_encode ($send);
 
-			error_log ('Sending:' . $response);
+			//error_log ('Sending:' . $response);
 			
 			// response output
 			echo $response;
