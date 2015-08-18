@@ -99,6 +99,15 @@ class Bimbler_Ajax {
 			
 			$rsvp_db_table = 'bimbler_rsvp';
 			
+			if (!isset ($rsvp_id)) {
+				return null;
+			}
+			
+			if (!is_numeric ($rsvp_id)) {
+				error_log ('Bimbler Ajax: get_current_attendance_status: RSVP ID is not numeric.');
+				return null;	
+			}
+			
 			$table_name = $wpdb->base_prefix . $rsvp_db_table;
 			
 			$sql =  'SELECT * FROM '. $table_name;
