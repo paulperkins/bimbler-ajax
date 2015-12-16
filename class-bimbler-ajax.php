@@ -71,6 +71,7 @@ class Bimbler_Ajax {
         	add_action( 'wp_ajax_commentajax-submit', array ($this, 'comment_ajax_submit'));
         	add_action( 'wp_ajax_elevationajax-submit', array ($this, 'elevation_ajax_submit'));
         	add_action( 'wp_ajax_locatorajax-submit', array ($this, 'locator_ajax_submit'));
+        	add_action( 'wp_ajax_trackerajax-submit', array ($this, 'tracker_ajax_submit'));
         	add_action( 'wp_ajax_locationupdateajax-submit', array ($this, 'location_update_ajax_submit'));
         	 
         	 
@@ -82,12 +83,18 @@ class Bimbler_Ajax {
 			wp_register_script ('bimbler-ajax-script', plugin_dir_url( __FILE__ ) . 'js/bimbler.js', array( 'jquery' ) );
 		
 			wp_enqueue_script( 'bimbler-ajax-script');
+
+			// Tracker
+			wp_register_script ('bimbler-tracker-script', plugin_dir_url( __FILE__ ) . 'js/bimbler-tracker.js', array( 'jquery' ) );
+			wp_enqueue_script( 'bimbler-tracker-script');
 				
 			// declare the URL to the file that handles the AJAX request (wp-admin/admin-ajax.php)
 			wp_localize_script( 'bimbler-ajax-script', 'RSVPAjax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
 
 
-			wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=weather');
+			//wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=weather');
+			//wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?v=3.exp');
+			wp_register_script ('bimbler-google-maps', '//maps.google.com/maps/api/js?sensor=false');
 		
 			wp_enqueue_script( 'bimbler-google-maps');
 
@@ -220,14 +227,14 @@ class Bimbler_Ajax {
 				exit;
 			}
 				
-			// TODO: Sanity-check value of RWGPS ID - must be an int.
-			if (0 == strlen ($rwgps_id)) {
+			// Sanity-check value of RWGPS ID - must be an int.
+			if ((0 == strlen ($rwgps_id) || !is_numeric ($rwgps_id))) {
 				error_log ('elevation_ajax_submit: RWGPS ID not set.');
 					
 				header( "Content-Type: application/json" );
 					
 				$send['status'] = 'no_comment';
-				$send['text'] = 'Please enter a comment!';
+				$send['text'] = 'Form not correctly specified - no RWGPS ID!';
 					
 				$response = json_encode ($send);
 					
@@ -376,7 +383,79 @@ class Bimbler_Ajax {
 			exit;
 		}
 		
+		function tracker_ajax_submit () {
+		
+			// get the submitted parameters
+			$event_id = $_POST['event'];
+				
+			error_log ('Tracker AJAX: Event ID: ' . $event_id);
+				
+			if (!wp_verify_nonce($_POST['nonce'], 'bimbler_tracker')) {
+				error_log ('tracker_ajax_submit: Cannot validate nonce.');
+		
+				$send = 'Error: cannot validate nonce.';
+			} else if  (!is_numeric ($event_id)) {
+				error_log ('tracker_ajax_submit: Cannot validate event_id.');
+				
+				$send = 'Error: cannot validate event_id.';
+				
+			} else {
+				// Get the logged-in user's details;
+				global $current_user;
+				get_currentuserinfo();
+			
+				// User ID
+				$user_id = $current_user->ID;
 
+				// Fetch RSVP table contents for this event.
+				$rsvps = Bimbler_RSVP::get_instance()->get_event_rsvp_object ($event_id);
+				
+				$return_rsvps = array();
+				
+				$event_hosts = Bimbler_RSVP::get_instance()->get_event_host_users ($event_id);
+				
+				// Get the position data for each user.
+				if ($rsvps) {
+					foreach ($rsvps as $rsvp) {
+						
+						$meta = get_user_meta ($rsvp->user_id, 'bimblers_loc_json', true);
+						
+						$meta_object = json_decode ($meta);
+	
+						// Only continue if this location object is for this event.
+						if (!empty ($meta_object) && ($meta_object->event_id == $event_id)) {
+							$rsvp->pos_lat = $meta_object->lat;
+							$rsvp->pos_lng = $meta_object->lng;
+							$rsvp->pos_spd = $meta_object->spd;
+							$rsvp->pos_hdg = $meta_object->hdg;
+							$rsvp->pos_time = $meta_object->time;
+						
+							// Only return this user's location, and those of the event hosts.
+							if (($rsvp->user_id == $user_id) ||
+							    in_array ($rsvp->user_id, $event_hosts)) {
+								$return_rsvps[] = $rsvp;
+							}
+						}
+					}
+				}
+				
+				error_log ('tracker_ajax_submit: returning ' . count($return_rsvps) . ' records.');
+				
+				$send = $return_rsvps;
+			}
+		
+			header( "Content-Type: application/json" );
+		
+			// generate the response
+			$response = json_encode ($send);
+				
+			//error_log ('Locator AJAX - Sending:' . print_r ($response, true));
+		
+			// response output
+			echo $response;
+		
+			exit;
+		}
 		/*
 		 * Handler for the location update Ajax call.
 		*/
@@ -587,7 +666,7 @@ class Bimbler_Ajax {
 			error_log ('Comment AJAX: Event Post ID: ' . $post_id);
 			error_log ('Comment AJAX: Parent comment: ' . $parent_comment_id);
 			error_log ('Comment AJAX: Comment: ' . $comment);
-			error_log ('Commentt AJAX: Nonce: ' . $nonce);
+			error_log ('Comment AJAX: Nonce: ' . $nonce);
 		
 			$response = '';
 				
@@ -727,6 +806,7 @@ class Bimbler_Ajax {
 			$user_id = $_POST['user_id'];
 			$nonce = $_POST['nonce'];
 			$rsvp = $_POST['rsvp'];
+			$guests = 0;
 		
 			error_log ('RSVP AJAX: Event Post ID: ' . $event_id);
 			error_log ('RSVP AJAX: User ID: ' . $user_id);
@@ -850,6 +930,10 @@ class Bimbler_Ajax {
 			$rsvp_id = $_POST['container'];
 			
 			$event_id = 0;
+			
+			// TODO: Add nonce validation.
+			// TODO: Add event_id validation  - must be numeric.
+			// TODO: Add RSVP ID validation.
 			
 			if (isset ($_POST['event_id'])) {
 				$event_id = $_POST['event_id'];
