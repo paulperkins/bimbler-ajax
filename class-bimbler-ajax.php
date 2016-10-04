@@ -94,7 +94,8 @@ class Bimbler_Ajax {
 
 			//wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=weather');
 			//wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?v=3.exp');
-			wp_register_script ('bimbler-google-maps', '//maps.google.com/maps/api/js?sensor=false');
+			//wp_register_script ('bimbler-google-maps', '//maps.google.com/maps/api/js?sensor=false');
+			wp_register_script ('bimbler-google-maps', 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCThuvA1vTl5oX147ttncjgOFVKtPRPeLQ');
 		
 			wp_enqueue_script( 'bimbler-google-maps');
 
