@@ -58,9 +58,30 @@ jQuery(document).ready(function ($) {
 						var marker = new google.maps.Marker(
 							{
 								map: ride_map,
+								animation: google.maps.Animation.DROP,
 								position: results[0].geometry.location
 							}
 						);
+
+						var venue_name_enc = map_div.getAttribute('data-venue-name');
+
+						if (venue_name_enc) {
+
+							var venue_name = decodeURIComponent(venue_name_enc);
+
+							var contentString = '<div id="content">'+
+								'<p>' + venue_name + '</p>';
+
+							var infowindow = new google.maps.InfoWindow({
+								content: contentString
+								});
+
+							infowindow.open(ride_map, marker);
+
+							marker.addListener('click', function() {
+								infowindow.open(ride_map, marker);
+							});								
+						}
 
 						ride_map.setCenter(marker.getPosition());
 					}
