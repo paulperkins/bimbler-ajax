@@ -21,12 +21,12 @@ jQuery(document).ready(function ($) {
 		//console.log ('RWGPS: ' + rwgps_id);
 
 	    var options = {
-	            zoom: 13,
+	            zoom: 17,
 	            center: brisbane,
-	            disableDefaultUI: true,
-	            draggable: false,
+	            //disableDefaultUI: true,
+	            //draggable: false,
 	            scrollwheel: false, 
-	            disableDoubleClickZoom: true
+	            //disableDoubleClickZoom: true
 	        };
 		
 	    // init map
@@ -41,6 +41,63 @@ jQuery(document).ready(function ($) {
 		    
 	    	ctaLayer.setMap(ride_map);
 	    }
+
+		var venue_address_enc = map_div.getAttribute('data-venue-address');
+
+		if (venue_address_enc) {
+
+			var venue_address = decodeURIComponent(venue_address_enc);
+
+			var geocoder= new google.maps.Geocoder();
+			
+			geocoder.geocode( 
+				{ 'address': venue_address }, 
+				function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+
+						var marker = new google.maps.Marker(
+							{
+								map: ride_map,
+								position: results[0].geometry.location
+							}
+						);
+
+						ride_map.setCenter(marker.getPosition());
+					}
+				}
+			);
+			
+		}
+
+
+
+/*
+
+    window.renderVenueMap = function (address, map_div, event_id) {
+
+		if ('undefined' === typeof google) {
+			return;
+		}
+
+			var venue_address = decodeURIComponent(gmap.getAttribute('data-venue-address'));
+
+
+    	var address = address || null;
+    	
+    	var geocoder= new google.maps.Geocoder();
+    	
+    	geocoder.geocode( 
+    		{ 'address': address }, 
+    		function(results, status) {
+    			if (status == google.maps.GeocoderStatus.OK) {
+    				setMap(results[0].geometry.location, map_div, event_id);
+    			}
+    		}
+    	);
+    }
+
+*/
+
 	}	
 	
 	// Detect if we're running on a mobile device, and adjust the map DIV if so to make it visible.
